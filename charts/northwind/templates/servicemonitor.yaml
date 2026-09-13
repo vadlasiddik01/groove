@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: northwind
+  namespace: {{ .Values.namespace }}
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [api, worker, remediation]
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 5s

@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: northwind-alerts
+  namespace: {{ .Values.namespace }}
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: northwind.worker
+      rules:
+        - alert: WorkerMemoryLeak
+          expr: |
+            deriv(
+              process_resident_memory_bytes{namespace="{{ .Values.namespace }}", pod=~"worker-.*"}[10m]
+            ) > 20000
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Worker memory is continuously increasing"
+            description: "Worker RSS has a positive 10-minute trend. Automated remediation will restart worker pods."
+        - alert: WorkerUnavailable
+          expr: |
+            kube_deployment_status_replicas_available{
+              namespace="{{ .Values.namespace }}",
+              deployment="worker"
+            } < 1
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "No worker replicas are available"
