@@ -1,5 +1,5 @@
 import express from "express";
-import Redis from "ioredis";
+import {Redis} from "ioredis";
 import { MongoClient } from "mongodb";
 import { Counter, Registry, collectDefaultMetrics } from "prom-client";
 

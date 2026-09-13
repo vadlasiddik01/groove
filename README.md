@@ -53,7 +53,6 @@ Worker/API -> Prometheus -> Alertmanager -> remediation service
 - git
 - curl
 
-Recommended local resources: 8 GB RAM minimum; 12 GB+ is more comfortable.
 
 ## 1. Start local Git server
 

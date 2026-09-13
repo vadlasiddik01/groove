@@ -1,5 +1,5 @@
 import http from "node:http";
-import Redis from "ioredis";
+import {Redis} from "ioredis";
 import { MongoClient } from "mongodb";
 import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from "prom-client";
 
