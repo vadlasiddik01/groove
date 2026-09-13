@@ -1,0 +1,13 @@
+{
+  "name": "northwind-logistics",
+  "private": true,
+  "scripts": {
+    "build": "npm run build -ws",
+    "typecheck": "npm run typecheck -ws"
+  },
+  "workspaces": [
+    "services/api",
+    "services/worker",
+    "services/remediation"
+  ]
+}
