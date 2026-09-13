@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: remediation
+  namespace: {{ .Values.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: remediation
+  namespace: {{ .Values.namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: remediation
+  namespace: {{ .Values.namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: remediation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: remediation
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: remediation
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.remediation.replicas }}
+  selector:
+    matchLabels:
+      app: remediation
+  template:
+    metadata:
+      labels:
+        app: remediation
+    spec:
+      serviceAccountName: remediation
+      containers:
+        - name: remediation
+          image: {{ .Values.images.registry }}/northwind-remediation:{{ .Values.images.tag }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3002
+          env:
+            - name: PORT
+              value: "3002"
+            - name: TARGET_NAMESPACE
+              value: {{ .Values.namespace | quote }}
+            - name: WORKER_LABEL
+              value: "app=worker"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+          resources:
+{{ toYaml .Values.resources.remediation | indent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: remediation
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: remediation
+  ports:
+    - name: http
+      port: 3002
+      targetPort: 3002

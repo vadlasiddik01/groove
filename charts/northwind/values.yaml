@@ -1,0 +1,55 @@
+namespace: northwind
+
+images:
+  registry: k3d-northwind-registry.localhost:5111
+  tag: dev
+
+api:
+  replicas: 1
+  port: 3000
+
+worker:
+  replicas: 1
+  port: 3001
+  chaos:
+    memoryLeak: false
+    hang: false
+
+remediation:
+  replicas: 1
+  port: 3002
+
+redis:
+  image: redis:8-alpine
+
+mongo:
+  image: mongo:8
+  storage: 1Gi
+
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 10
+  listLength: "10"
+
+resources:
+  api:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  worker:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  remediation:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
