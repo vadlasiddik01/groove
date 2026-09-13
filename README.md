@@ -166,6 +166,81 @@ kubectl -n northwind get pods -w
 kubectl -n northwind logs deploy/worker
 kubectl -n northwind logs deploy/remediation
 ```
+## Chaos scenario A — worker crash
+
+Generate some load:
+
+```bash
+./scripts/load-test.sh 100
+```
+
+Then kill a worker pod:
+
+```bash
+./scripts/chaos-crash.sh
+```
+
+Watch:
+
+```bash
+kubectl -n northwind get pods -w
+```
+
+Expected:
+- worker pod terminates
+- Deployment notices desired replicas are not met
+- replacement pod is created
+- Redis retains unprocessed orders
+- processing continues
+
+## Chaos scenario B — gradual memory leak
+
+Patch the Git-controlled Helm values:
+
+```yaml
+worker:
+  chaos:
+    memoryLeak: true
+```
+
+Commit and push. Argo CD deploys the change.
+
+The worker allocates a small amount of memory repeatedly and exposes its RSS through Prometheus.
+
+The alert uses a trend rather than only a static threshold.
+
+Expected flow:
+
+```text
+Worker RSS increases
+ -> Prometheus observes trend
+ -> WorkerMemoryLeak alert fires
+ -> Alertmanager webhook
+ -> remediation service
+ -> worker pod deleted
+ -> Deployment creates replacement
+ -> memory returns to normal
+```
+
+To turn it off, change the same Git value back to false, commit and push.
+
+## Chaos scenario C — worker hang
+
+Set:
+
+```yaml
+worker:
+  chaos:
+    hang: true
+```
+
+Argo CD syncs it. The worker's health endpoint stops responding, so Kubernetes liveness checking restarts the container.
+
+This is useful to explain why liveness is good for a hard hang but insufficient for a slow memory leak.
+
+## Incident summary
+
+See `docs/incident-summary.md`.
 
 ## Important GitOps rule
 
